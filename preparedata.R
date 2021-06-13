@@ -41,27 +41,35 @@ el <- readRDS("el.RDS")
 # https://www.asesg.org/PDFfiles/2012/35-43-Zhang.pdf
 # 
 # Counts mentioned in the article were manually typed in a Google Sheet.
-# Note that there seems to be a typo: Mengyang is mentioned twice.
-# Assuming that the numbers of the latter are from Mengla instead.
+# Note that there seems to be a typo: Mengyang county is mentioned twice.
+# Assuming that the numbers of the latter are from Mengla county instead.
+# Anyway, I couldn't find any geolocation for counties.
 #------------------------------------------------------------------------------
 
 sheet <- "https://docs.google.com/spreadsheets/d/1dAqxuEnazMQMIAwsudU54_7_t8VQtUdzA0P74-YtBCc/edit?usp=sharing"
-data <- read_sheet(sheet)
+el_gd_data <- read_sheet(sheet)
 
-# Yunnan polylines from https://sedac.ciesin.columbia.edu/ftpsite/pub/data/China/adm_bnd/CTSAR90.bnd90/province/
-# NASA/SEDAC. Registration needed.
-yunnan <- readOGR("t5390/t5390.e00")
-yunnan_sf <- st_as_sf(yunnan)
+# China's regions from Humanitarian Data Exchange
+url <- "https://data.humdata.org/dataset/17a2aaa2-dea9-4a2e-8b3f-92d1bdfb850c/resource/9e67ddf9-ce26-4b7a-82b1-51e5ca0714c8/download/chn_adm_ocha_2020_shp.zip"
+temp <- tempfile()
+download.file(url, temp)
+unzip(zipfile = temp, exdir = "china")
+unlink(temp)
 
-rm(yunnan)
-gc()
+st_layers("china") # 4 layers
+ch_provinces <- st_read("china", layer = "chn_admbnda_adm1_ocha_2020")
+ch_divisions <- st_read("china", layer = "chn_admbnda_adm2_ocha_2020")
 
-# In Lambert Conformal Conic projection
-yunnan_sf <- yunnan_sf %>%
-  st_transform(crs = 4326)
+yunnan <- ch_provinces %>% 
+  filter(ADM1_EN == "Yunnan Province") %>% 
+  select(ADM1_EN, geometry)
 
-write_rds(yunnan_sf, "yunnan_sf.RDS")
-yunnan_sf <- readRDS("yunnan_sf.RDS")
+el_div <- merge(el_gd_data, ch_divisions, by.x = "Division", by.y = "ADM2_EN")
+el_div <- el_div %>% 
+  select(Division, Min, Max, geometry)
+el_div <- st_as_sf(el_div)
+
+# Kunming, the capital of Yunnan, is to-date the most N place the elephant herd have wandered
 
 #-------------------------------------------------------------------------------
 # Data 3:
@@ -94,14 +102,22 @@ plot <- ggplot() +
 elCol <- colorFactor(palette = 'viridis', el$basisOfRecord)
 
 leaflet() %>%
-  addProviderTiles(providers$OpenTopoMap) %>%
+  addTiles(group = "OSM (default)") %>%
+  addProviderTiles(providers$OpenTopoMap, group = "Topo") %>%
   setView(lat = mean(el$decimalLatitude), 
           lng = mean(el$decimalLongitude), 
           zoom = 3) %>% 
-  addPolylines(data = yunnan_sf,
-               weight = 3,
-               opacity = 0.3,
-               color = "red") %>% 
+  addPolygons(data = yunnan,
+              weight = 3,
+              opacity = 0.6,
+              color = "red",
+              label = ~ADM1_EN) %>% 
+  addPolygons(data = el_div,
+              weight = 2,
+              opacity = 0.6,
+              color = "red",
+              fillColor = max,
+              label = ~Division) %>% 
   addCircleMarkers(data = el,
                    lat = ~decimalLatitude,
                    lng = ~decimalLongitude,
@@ -113,6 +129,7 @@ leaflet() %>%
                                   "<b>Recorded by:</b> ", recordedBy, "<br/>", 
                                   "<b>References:</b> ", references),
                    color = ~elCol(basisOfRecord),
+                   radius = 6,
                    weight = 2, 
                    opacity = 1) %>% 
   # Search is not working with circleMarkers. 
@@ -141,6 +158,6 @@ leaflet() %>%
                       firstTipSubmit = TRUE, textPlaceholder = "Type species, year, or place",
                       autoCollapse = FALSE, hideMarkerOnCollapse = TRUE)
                     ) %>% 
-  addLegend(pal = elCol, values = el$basisOfRecord, title = "Basis of record",
+  addLegend(pal = elCol, values = el$basisOfRecord, title = "Observation type",
             position = "bottomright")
 
