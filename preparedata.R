@@ -6,13 +6,13 @@ library(leaflet)
 library(leaflet.extras)
 library(raster)
 library(rgdal)
+library(htmltools)
 
 #---------------------------------------------------
 # Data 1: 
 # Global Biodiversity Information Facility (GBIF)
 #---------------------------------------------------
 
-# rgbif code snippet by https://github.com/AChase44/FISH-504
 species <- occ_search(scientificName = "Elephas maximus", limit = 5000)
 species_1 <- as.data.frame(species$data)
 el <- species_1[,c("acceptedScientificName","stateProvince", "year", "recordedBy", 
@@ -27,7 +27,7 @@ el <- el %>%
                              ifelse(grepl("https?://", references), paste0("<a href='", references, "'>Link</a>"), 
                                     references)),
          basisOfRecord = gsub("_", " ", str_to_title(basisOfRecord)),
-         basisOfRecord = ifelse(basisOfRecord == "Living specimen", "Human observation", basisOfRecord)) # one row of these
+         basisOfRecord = ifelse(basisOfRecord == "Living specimen", "Human observation", basisOfRecord)) # I assume these are ~the same
 
 
 write_rds(el, "el.RDS")
@@ -39,9 +39,10 @@ el <- readRDS("el.RDS")
 # https://www.asesg.org/PDFfiles/2012/35-43-Zhang.pdf
 # 
 # Animal counts mentioned in the article manually typed in a Google Sheet.
+#
 # Note that there seems to be a typo: Mengyang county is mentioned twice.
 # I assume that the numbers of the latter are from Mengla county instead.
-# Anyway, I couldn't find any geolocation for counties so this level of data
+# Anyway, I couldn't find any geolocation for counties, so data of this level
 # is not used in the map.
 #------------------------------------------------------------------------------
 
@@ -64,7 +65,7 @@ yunnan <- ch_provinces %>%
   dplyr::select(ADM1_EN, geometry)
 
 # Kunming, the capital of the Yunnan province, is the most Northern
-# point where the famous elephant herd has wandered so far
+# point where the famous elephant herd has wandered so far in 2020-2021
 kunming <- ch_divisions %>% 
   filter(ADM2_EN == "Kunming") %>% 
   dplyr::select(ADM2_EN, Adm2_CAP, geometry)
@@ -95,20 +96,37 @@ gc()
 # Map
 #------------
 
+# https://stackoverflow.com/a/52226825
+tag.map.title <- tags$style(HTML("
+  .leaflet-control.map-title { 
+    transform: translate(-50%,20%);
+    position: fixed !important;
+    left: 50%;
+    text-align: center;
+    padding-left: 10px; 
+    padding-right: 10px; 
+    font-weight: bold;
+    font-size: 12px;
+  }
+"))
+
+title <- tags$div(
+  tag.map.title, HTML("<p>Observations on Asian elephants | Tuija Sonkkila | https://github.com/tts/asianelephants</p>")
+)  
+
 elCol <- colorFactor(palette = 'viridis', el$basisOfRecord)
 
 m <- leaflet() %>%
   addTiles(group = "OpenStreetMap") %>% 
-  addProviderTiles(providers$Stamen.Toner, group = "Toner") %>% 
-  addProviderTiles(providers$CartoDB.DarkMatter, 
-                   options = providerTileOptions(opacity = 0.8),
-                   group = "Dark") %>% 
-  addProviderTiles(providers$OpenTopoMap, group = "Topo") %>%
-  addLayersControl(baseGroups = c("OpenStreetMap", "Dark", "Toner", "Topo"),
+  addProviderTiles(providers$Stamen.TerrainBackground, group = "Terrain") %>% 
+  addProviderTiles(providers$CartoDB.DarkMatter, group = "Dark") %>% 
+  addTiles(urlTemplate = "", attribution = 'Data: GBIF and AsESG/Gajah') %>% 
+  addLayersControl(baseGroups = c("Terrain", "Dark", "OpenStreetMap"),
                    options = layersControlOptions(collapsed = FALSE)) %>% 
   setView(lat = mean(el$decimalLatitude), 
           lng = mean(el$decimalLongitude), 
           zoom = 3) %>% 
+  addControl(title, position = "topleft", className="map-title") %>% 
   addPolygons(data = yunnan,
               weight = 3,
               opacity = 0.3,
@@ -121,9 +139,10 @@ m <- leaflet() %>%
               label = ~paste0(ADM2_EN, ", ", Adm2_CAP)) %>% 
   addPolygons(data = el_div,
               weight = 2,
-              opacity = 0.6,
+              #opacity = 0.6,
               color = "red",
               fillColor = max,
+              fillOpacity = 0.3,
               label = ~Division) %>% 
   addCircleMarkers(data = el,
                    lat = ~decimalLatitude,
@@ -165,7 +184,7 @@ m <- leaflet() %>%
                       autoCollapse = FALSE, hideMarkerOnCollapse = TRUE)
                     ) %>% 
   addLegend(pal = elCol, values = el$basisOfRecord, title = "Observation type", position = "bottomright") %>% 
-  addMeasure(primaryLengthUnit = "kilometers")
+  addMeasure(primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters")
 
 htmlwidgets::saveWidget(m, "el_map.html")
 
