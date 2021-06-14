@@ -1,8 +1,6 @@
 library(tidyverse)
 library(rgbif)
 library(googlesheets4)
-library(tidygeocoder)
-library(rnaturalearth)
 library(sf)
 library(leaflet)
 library(leaflet.extras)
@@ -40,16 +38,17 @@ el <- readRDS("el.RDS")
 # Li Zhang: Current Status of Asian Elephants in China. Gajah 35 (2011) 43-46
 # https://www.asesg.org/PDFfiles/2012/35-43-Zhang.pdf
 # 
-# Counts mentioned in the article were manually typed in a Google Sheet.
+# Animal counts mentioned in the article manually typed in a Google Sheet.
 # Note that there seems to be a typo: Mengyang county is mentioned twice.
-# Assuming that the numbers of the latter are from Mengla county instead.
-# Anyway, I couldn't find any geolocation for counties.
+# I assume that the numbers of the latter are from Mengla county instead.
+# Anyway, I couldn't find any geolocation for counties so this level of data
+# is not used in the map.
 #------------------------------------------------------------------------------
 
 sheet <- "https://docs.google.com/spreadsheets/d/1dAqxuEnazMQMIAwsudU54_7_t8VQtUdzA0P74-YtBCc/edit?usp=sharing"
 el_gd_data <- read_sheet(sheet)
 
-# China's regions from Humanitarian Data Exchange
+# China's region polygons from Humanitarian Data Exchange
 url <- "https://data.humdata.org/dataset/17a2aaa2-dea9-4a2e-8b3f-92d1bdfb850c/resource/9e67ddf9-ce26-4b7a-82b1-51e5ca0714c8/download/chn_adm_ocha_2020_shp.zip"
 temp <- tempfile()
 download.file(url, temp)
@@ -62,14 +61,19 @@ ch_divisions <- st_read("china", layer = "chn_admbnda_adm2_ocha_2020")
 
 yunnan <- ch_provinces %>% 
   filter(ADM1_EN == "Yunnan Province") %>% 
-  select(ADM1_EN, geometry)
+  dplyr::select(ADM1_EN, geometry)
+
+# Kunming, the capital of the Yunnan province, is the most Northern
+# point where the famous elephant herd has wandered so far
+kunming <- ch_divisions %>% 
+  filter(ADM2_EN == "Kunming") %>% 
+  dplyr::select(ADM2_EN, Adm2_CAP, geometry)
 
 el_div <- merge(el_gd_data, ch_divisions, by.x = "Division", by.y = "ADM2_EN")
 el_div <- el_div %>% 
-  select(Division, Min, Max, geometry)
+  dplyr::select(Division, Min, Max, geometry)
 el_div <- st_as_sf(el_div)
 
-# Kunming, the capital of Yunnan, is to-date the most N place the elephant herd have wandered
 
 #-------------------------------------------------------------------------------
 # Data 3:
@@ -80,38 +84,41 @@ el_div <- st_as_sf(el_div)
 flickr_geocoded <- readRDS("../flickr/flickr_geocoded.RDS")
 my_el <- flickr_geocoded %>% 
   filter(title == "Hammock session") %>% 
-  mutate(popup_img = paste("<a href='", url_z,"'><img src='", url_m, "'></a>"),
+  mutate(popup_img = "<a href='https://flic.kr/p/MND8dD'>Video frame by JH</a>",
          datetaken = as.Date(datetaken)) %>% 
-  select(latitude, longitude, datetaken, popup_img)
+  dplyr::select(latitude, longitude, datetaken, popup_img)
 
 rm(flickr_geocoded)
 gc()
 
-# Plot
-asia <- ne_countries(continent = "asia", scale = "medium", returnclass = "sf")
-
-plot <- ggplot() +
-  geom_sf(data = asia, fill = "snow") +
-  geom_point(data = el, aes(x = decimalLongitude, y = decimalLatitude, fill = scientificName),
-             pch = 21, size = 2.5, alpha = 0.4) +
-  scale_fill_viridis_d(option = "inferno") +
-  guides(fill = guide_legend(title = "")) +
-  theme_void()
-
+#------------
 # Map
+#------------
+
 elCol <- colorFactor(palette = 'viridis', el$basisOfRecord)
 
-leaflet() %>%
-  addTiles(group = "OSM (default)") %>%
+m <- leaflet() %>%
+  addTiles(group = "OpenStreetMap") %>% 
+  addProviderTiles(providers$Stamen.Toner, group = "Toner") %>% 
+  addProviderTiles(providers$CartoDB.DarkMatter, 
+                   options = providerTileOptions(opacity = 0.8),
+                   group = "Dark") %>% 
   addProviderTiles(providers$OpenTopoMap, group = "Topo") %>%
+  addLayersControl(baseGroups = c("OpenStreetMap", "Dark", "Toner", "Topo"),
+                   options = layersControlOptions(collapsed = FALSE)) %>% 
   setView(lat = mean(el$decimalLatitude), 
           lng = mean(el$decimalLongitude), 
           zoom = 3) %>% 
   addPolygons(data = yunnan,
               weight = 3,
-              opacity = 0.6,
-              color = "red",
+              opacity = 0.3,
+              color = "tomato",
               label = ~ADM1_EN) %>% 
+  addPolygons(data = kunming,
+              weight = 3,
+              opacity = 0.6,
+              color = "snow",
+              label = ~paste0(ADM2_EN, ", ", Adm2_CAP)) %>% 
   addPolygons(data = el_div,
               weight = 2,
               opacity = 0.6,
@@ -147,17 +154,18 @@ leaflet() %>%
     )
   ) %>%
   addMarkers(data = my_el,
-             group = "my_elobs",
              lat = ~latitude,
              lng = ~longitude,
-             label = ~paste0("My observation of a wild Elephas maximus borneensis ", datetaken)
-             ) %>%
+             label = "My observation of a wild Elephas maximus borneensis",
+             popup = ~paste0(popup_img, "<br/><b>Taken at: </b>", datetaken)) %>%
   addSearchFeatures(targetGroups = "elobs", 
                     options = searchFeaturesOptions(
                       zoom = 5, openPopup = TRUE, 
                       firstTipSubmit = TRUE, textPlaceholder = "Type species, year, or place",
                       autoCollapse = FALSE, hideMarkerOnCollapse = TRUE)
                     ) %>% 
-  addLegend(pal = elCol, values = el$basisOfRecord, title = "Observation type",
-            position = "bottomright")
+  addLegend(pal = elCol, values = el$basisOfRecord, title = "Observation type", position = "bottomright") %>% 
+  addMeasure(primaryLengthUnit = "kilometers")
+
+htmlwidgets::saveWidget(m, "el_map.html")
 
