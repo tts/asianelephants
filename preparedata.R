@@ -78,8 +78,8 @@ el_div <- st_as_sf(el_div)
 
 #-------------------------------------------------------------------------------
 # Data 3:
-# My own observation. Still waiting for mandatory agree votes at iNaturalist 
-# so not available from GBIF
+# My own observation. Still waiting for a Research Grade status at iNaturalist 
+# so not available from GBIF yet
 #-------------------------------------------------------------------------------
 
 flickr_geocoded <- readRDS("../flickr/flickr_geocoded.RDS")
