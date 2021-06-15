@@ -10,20 +10,6 @@ kunming <- readRDS("./data/kunming.RDS")
 el_div <- readRDS("./data/el_div.RDS")
 my_el <- readRDS("./data/my_el.RDS")
 
-# https://stackoverflow.com/a/52226825
-tag.map.title <- tags$style(HTML("
-  .leaflet-control.map-title { 
-    transform: translate(-50%,20%);
-    position: fixed !important;
-    left: 50%;
-    text-align: center;
-    padding-left: 10px; 
-    padding-right: 10px; 
-    font-weight: bold;
-    font-size: 12px;
-  }
-"))
-
 labelstyle <- list(
   "color" = "black",
   "font-family" = "serif",
@@ -54,6 +40,28 @@ ui <- fluidPage(
     ))
   ),
   
+  sidebarPanel(
+    HTML("<div><span style='color:black'>
+         <p>A herd of wild <a href='https://en.wikipedia.org/wiki/Asian_elephant'>Asian elephants</a> has been wandering in China since 2020, gathering a lot of <a href='https://www.theguardian.com/world/2021/jun/02/herd-of-escaped-elephants-leave-500km-trail-of-destruction-in-south-west-china'>headlines recently</a>.</p>
+         <p></p>
+         <p>Most of the elephants in China live in the <a href='https://en.wikipedia.org/wiki/Xishuangbanna_Dai_Autonomous_Prefecture'>Xishuangbanna Dai Autonomous Prefecture</a>, the southernmost region of the <a href='https://en.wikipedia.org/wiki/Yunnan'>Yunnan province</a>.</p>
+         <p></p>
+         <p>This week, the herd has been seen near the city of <a href='https://en.wikipedia.org/wiki/Kunming'>Kunming</a>, the capital of Yunnan.</p>
+         <p></p>
+         <p>Elephant data presented in these maps come mainly from two sources:</p>
+         <ul>
+           <li><a href='https://gbif.org'>GBIF</a>, global Biodiversity Information Facility via the <a href='https://github.com/ropensci/rgbif'>rgbif R library</a></li>
+           <li><a href='https://www.asesg.org/PDFfiles/2012/35-43-Zhang.pdf'>Li Zhang: Current Status of Asian Elephants in China. <i>Gajah 35 (2011) 43-46</i> (PDF)</a></li>
+         </ul>
+         <p>In addition, there is one personal data marker: a sighting from <a href='https://www.tabinwildlife.com.my/'>Tabin Wildlife Resort</a>, Sabah, Malaysian Borneo.</p>
+         <p>Yunnan polygons are from <a href='https://ttdata.humdata.org'>Humanitarian Data Exchange</a></p>
+         <p></p>
+         <p>Tuija Sonkkila <a href='https://twitter.com/ttso?lang=en'>@ttso</a></p>
+         <p><a href='https://github.com/tts/asianelephants'>https://github.com/tts/asianelephants</a></p>
+         </span></div>"),
+    width = 3
+  ),
+  
   mainPanel(
     tabsetPanel(
       tabPanel("Heatmap", 
@@ -61,17 +69,13 @@ ui <- fluidPage(
       tabPanel("Observations", 
                leafletOutput("map", height = 800))
     ),
-    width = 12
+    width = 9
   )
 )
 
 server <- function(input, output, session) {
   
   output$heat <- renderLeaflet({
-    
-    title <- tags$div(
-      tag.map.title, HTML("<p>Distribution | by @ttso https://github.com/tts/asianelephants</p>")
-    )  
     
     mh <- leaflet() %>%
       addTiles(
@@ -94,9 +98,6 @@ server <- function(input, output, session) {
         lat = mean(el$decimalLatitude), 
         lng = mean(el$decimalLongitude), 
         zoom = 3
-      ) %>% 
-      addControl(
-        title, position = "topleft", className="map-title"
       ) %>% 
       addPolygons(
         data = yunnan,
@@ -138,10 +139,6 @@ server <- function(input, output, session) {
   
   output$map <- renderLeaflet({
     
-    title <- tags$div(
-      tag.map.title, HTML("<p>Observations | by @ttso https://github.com/tts/asianelephants</p>")
-    )  
-    
     elCol <- colorFactor(palette = 'viridis', el$basisOfRecord)
     
     m <- leaflet() %>%
@@ -165,9 +162,6 @@ server <- function(input, output, session) {
         lat = mean(el$decimalLatitude), 
         lng = mean(el$decimalLongitude), 
         zoom = 3
-      ) %>% 
-      addControl(
-        title, position = "topleft", className="map-title"
       ) %>% 
       addPolygons(data = yunnan,
                   weight = 3,
