@@ -43,7 +43,7 @@ el <- readRDS("el.RDS")
 # Note that there seems to be a typo: Mengyang county is mentioned twice.
 # I assume that the numbers of the latter are from Mengla county instead.
 # Anyway, I couldn't find any geolocation for counties, so data of this level
-# is not used in the map.
+# is not used in these maps.
 #------------------------------------------------------------------------------
 
 sheet <- "https://docs.google.com/spreadsheets/d/1dAqxuEnazMQMIAwsudU54_7_t8VQtUdzA0P74-YtBCc/edit?usp=sharing"
@@ -64,17 +64,25 @@ yunnan <- ch_provinces %>%
   filter(ADM1_EN == "Yunnan Province") %>% 
   dplyr::select(ADM1_EN, geometry)
 
+write_rds(yunnan, "yunnan.RDS")
+yunnan <- readRDS("yunnan.RDS")
+
 # Kunming, the capital of the Yunnan province, is the most Northern
 # point where the famous elephant herd has wandered so far in 2020-2021
 kunming <- ch_divisions %>% 
   filter(ADM2_EN == "Kunming") %>% 
   dplyr::select(ADM2_EN, Adm2_CAP, geometry)
 
+write_rds(kunming, "kunming.RDS")
+kunming <- readRDS("kunming.RDS")
+
 el_div <- merge(el_gd_data, ch_divisions, by.x = "Division", by.y = "ADM2_EN")
 el_div <- el_div %>% 
   dplyr::select(Division, Min, Max, geometry)
 el_div <- st_as_sf(el_div)
 
+write_rds(el_div, "el_div.RDS")
+el_div <- readRDS("el_div.RDS")
 
 #-------------------------------------------------------------------------------
 # Data 3:
@@ -92,9 +100,8 @@ my_el <- flickr_geocoded %>%
 rm(flickr_geocoded)
 gc()
 
-#------------
-# Map
-#------------
+write_rds(my_el, "my_el.RDS")
+my_el <- readRDS("my_el.RDS")
 
 # https://stackoverflow.com/a/52226825
 tag.map.title <- tags$style(HTML("
@@ -110,40 +117,73 @@ tag.map.title <- tags$style(HTML("
   }
 "))
 
+labelstyle <- list(
+  "color" = "black",
+  "font-family" = "serif",
+  "font-style" = "italic",
+  "box-shadow" = "3px 3px rgba(0,0,0,0.25)",
+  "font-size" = "8px",
+  "border-color" = "rgba(0,0,0,0.5)"
+)
+
+#-----------------
+# Observation map
+#-----------------
+
 title <- tags$div(
-  tag.map.title, HTML("<p>Observations on Asian elephants | Tuija Sonkkila | https://github.com/tts/asianelephants</p>")
+  tag.map.title, HTML("<p>Observations | by @ttso https://github.com/tts/asianelephants</p>")
 )  
 
 elCol <- colorFactor(palette = 'viridis', el$basisOfRecord)
 
 m <- leaflet() %>%
-  addTiles(group = "OpenStreetMap") %>% 
-  addProviderTiles(providers$Stamen.TerrainBackground, group = "Terrain") %>% 
-  addProviderTiles(providers$CartoDB.DarkMatter, group = "Dark") %>% 
-  addTiles(urlTemplate = "", attribution = 'Data: GBIF and AsESG/Gajah') %>% 
-  addLayersControl(baseGroups = c("Terrain", "Dark", "OpenStreetMap"),
-                   options = layersControlOptions(collapsed = FALSE)) %>% 
-  setView(lat = mean(el$decimalLatitude), 
-          lng = mean(el$decimalLongitude), 
-          zoom = 3) %>% 
-  addControl(title, position = "topleft", className="map-title") %>% 
+  addTiles(
+    group = "OpenStreetMap"
+    ) %>% 
+  addProviderTiles(
+    providers$Stamen.TerrainBackground, group = "Terrain"
+    ) %>% 
+  addProviderTiles(
+    providers$CartoDB.DarkMatter, group = "Dark"
+    ) %>% 
+  addTiles(
+    urlTemplate = "", attribution = 'Data: GBIF and AsESG/Gajah'
+    ) %>% 
+  addLayersControl(
+    baseGroups = c("Terrain", "Dark", "OpenStreetMap"),
+    options = layersControlOptions(collapsed = FALSE)
+    ) %>% 
+  setView(
+    lat = mean(el$decimalLatitude), 
+    lng = mean(el$decimalLongitude), 
+    zoom = 3
+    ) %>% 
+  addControl(
+    title, position = "topleft", className="map-title"
+    ) %>% 
   addPolygons(data = yunnan,
               weight = 3,
               opacity = 0.3,
               color = "tomato",
-              label = ~ADM1_EN) %>% 
+              label = ~ADM1_EN,
+              labelOptions = labelOptions(
+                style = labelstyle
+                )) %>% 
   addPolygons(data = kunming,
               weight = 3,
               opacity = 0.6,
               color = "snow",
-              label = ~paste0(ADM2_EN, ", ", Adm2_CAP)) %>% 
+              label = ~paste0(ADM2_EN, ", ", Adm2_CAP),
+              labelOptions = labelOptions(
+                style = labelstyle
+                )) %>% 
   addPolygons(data = el_div,
               weight = 2,
-              #opacity = 0.6,
               color = "red",
-              fillColor = max,
-              fillOpacity = 0.3,
-              label = ~Division) %>% 
+              label = ~Division,
+              labelOptions = labelOptions(
+                style = labelstyle
+                )) %>% 
   addCircleMarkers(data = el,
                    lat = ~decimalLatitude,
                    lng = ~decimalLongitude,
@@ -172,19 +212,95 @@ m <- leaflet() %>%
       iconWidth = 1, iconHeight = 1
     )
   ) %>%
-  addMarkers(data = my_el,
-             lat = ~latitude,
-             lng = ~longitude,
-             label = "My observation of a wild Elephas maximus borneensis",
-             popup = ~paste0(popup_img, "<br/><b>Taken at: </b>", datetaken)) %>%
-  addSearchFeatures(targetGroups = "elobs", 
-                    options = searchFeaturesOptions(
-                      zoom = 5, openPopup = TRUE, 
-                      firstTipSubmit = TRUE, textPlaceholder = "Type species, year, or place",
-                      autoCollapse = FALSE, hideMarkerOnCollapse = TRUE)
-                    ) %>% 
-  addLegend(pal = elCol, values = el$basisOfRecord, title = "Observation type", position = "bottomright") %>% 
-  addMeasure(primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters")
+  addMarkers(
+    data = my_el,
+    lat = ~latitude,
+    lng = ~longitude,
+    label = "My observation of a wild Elephas maximus borneensis",
+    popup = ~paste0(popup_img, "<br/><b>Taken at: </b>", datetaken)
+    ) %>%
+  addSearchFeatures(
+    targetGroups = "elobs", 
+    options = searchFeaturesOptions(
+      zoom = 5, openPopup = TRUE, 
+      firstTipSubmit = TRUE, textPlaceholder = "Type species, year, or place",
+      autoCollapse = FALSE, hideMarkerOnCollapse = TRUE)
+    ) %>% 
+  addLegend(
+    pal = elCol, values = el$basisOfRecord, 
+    title = "Observation type", position = "bottomright"
+    ) %>% 
+  addMeasure(
+    primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters")
 
-htmlwidgets::saveWidget(m, "el_map.html")
+write_rds(m, "el_map.RDS")
+
+#-----------------
+# Heatmap
+#-----------------
+
+title <- tags$div(
+  tag.map.title, HTML("<p>Distribution | by @ttso https://github.com/tts/asianelephants</p>")
+)  
+
+mh <- leaflet() %>%
+  addTiles(
+    group = "OpenStreetMap"
+    ) %>% 
+  addProviderTiles(
+    providers$Stamen.TerrainBackground, group = "Terrain"
+    ) %>% 
+  addProviderTiles(
+    providers$CartoDB.DarkMatter, group = "Dark"
+    ) %>% 
+  addTiles(
+    urlTemplate = "", attribution = 'Data: GBIF and AsESG/Gajah'
+    ) %>% 
+  addLayersControl(
+    baseGroups = c("Terrain", "Dark", "OpenStreetMap"),
+    options = layersControlOptions(collapsed = FALSE)
+    ) %>% 
+  setView(
+    lat = mean(el$decimalLatitude), 
+    lng = mean(el$decimalLongitude), 
+    zoom = 3
+    ) %>% 
+  addControl(
+    title, position = "topleft", className="map-title"
+    ) %>% 
+  addPolygons(
+    data = yunnan,
+    weight = 3,
+    opacity = 0.3,
+    color = "tomato",
+    label = ~ADM1_EN,
+    labelOptions = labelOptions(
+      style = labelstyle)
+    ) %>% 
+  addPolygons(
+    data = kunming,
+    weight = 3,
+    opacity = 0.6,
+    color = "snow",
+    label = ~paste0(ADM2_EN, ", ", Adm2_CAP),
+    labelOptions = labelOptions(
+      style = labelstyle)
+    ) %>% 
+  addPolygons(
+    data = el_div,
+    weight = 2,
+    color = "red",
+    fillOpacity = 0.1,
+    label = ~Division,
+    labelOptions = labelOptions(
+      style = labelstyle)
+    ) %>% 
+  addHeatmap(
+    data = el,
+    lat = ~decimalLatitude,
+    lng = ~decimalLongitude,
+    blur = 20, max = 0.05, radius = 15
+  ) 
+
+write_rds(mh, "el_heatmap.RDS")
 
