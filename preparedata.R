@@ -75,7 +75,7 @@ write_rds(kunming, "data/kunming.RDS")
 
 el_div <- merge(el_gd_data, ch_divisions, by.x = "Division", by.y = "ADM2_EN")
 el_div <- el_div %>% 
-  dplyr::select(Division, Min, Max, geometry)
+  dplyr::select(Division, County, Min, Max, geometry)
 el_div <- st_as_sf(el_div)
 
 write_rds(el_div, "data/el_div.RDS")
