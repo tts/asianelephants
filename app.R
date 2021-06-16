@@ -45,10 +45,11 @@ ui <- fluidPage(
   
   sidebarPanel(
     HTML("<div><span style='color:black'>
-         <p>A herd of <a href='https://en.wikipedia.org/wiki/Asian_elephant'>Asian elephants</a> has been wandering in China since 2020. Recently, media coverage of their whereabouts has intensified.</p>
+         <p>A herd of <a href='https://en.wikipedia.org/wiki/Asian_elephant'>Asian elephants</a> has been wandering in China since 2020. Recently, media coverage of their whereabouts has intensified.
+         See e.g. <a href='https://www.theguardian.com/world/2021/jun/02/herd-of-escaped-elephants-leave-500km-trail-of-destruction-in-south-west-china'>this article by The Guardian</a>.</p>
          <p>Lately, the herd has been seen near the city of <a href='https://en.wikipedia.org/wiki/Kunming'>Kunming</a>, the capital of Yunnan.</p>
          <p></p>
-         <p>Most of the ~300 elephants in China live in the <a href='https://en.wikipedia.org/wiki/Xishuangbanna_Dai_Autonomous_Prefecture'>Xishuangbanna Dai Autonomous Prefecture</a>, the southernmost region of the <a href='https://en.wikipedia.org/wiki/Yunnan'>Yunnan province</a>.</p>
+         <p>Most of the ~300 elephants in China - 0,6% of the estimated total wild population - live in the <a href='https://en.wikipedia.org/wiki/Xishuangbanna_Dai_Autonomous_Prefecture'>Xishuangbanna Dai Autonomous Prefecture</a>, the southernmost region of the <a href='https://en.wikipedia.org/wiki/Yunnan'>Yunnan province</a>.</p>
          <p></p>
          <p>Data presented in these maps consist mainly of observations recorded in <a href='https://gbif.org'>GBIF</a>, the Global Biodiversity Information Facility.
          In addition, estimates of the number of elephants in Yunnan are from <a href='https://www.asesg.org/PDFfiles/2012/35-43-Zhang.pdf'>Li Zhang: Current Status of Asian Elephants in China</a> (PDF), <i>Gajah</i> 35 (2011) 43-46.
@@ -57,7 +58,7 @@ ui <- fluidPage(
          <p></p>
          <p>The heatmap shows the distribution of GBIF observations, and the other map presents them as circle markers with a popup.</p>
          <p></p>
-         <p>Tuija Sonkkila <a href='https://twitter.com/ttso?lang=en'>@ttso</a></p>
+         <p>Tuija Sonkkila <a href='https://twitter.com/ttso?lang=en'>@ttso</a> 2021-06-16</p>
          <p><a href='https://github.com/tts/asianelephants'>R code</a></p>
          </span></div>"),
     width = 3
