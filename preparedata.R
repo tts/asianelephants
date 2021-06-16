@@ -2,11 +2,8 @@ library(tidyverse)
 library(rgbif)
 library(googlesheets4)
 library(sf)
-library(leaflet)
-library(leaflet.extras)
 library(raster)
 library(rgdal)
-library(htmltools)
 
 #---------------------------------------------------
 # Data 1: 
@@ -29,7 +26,7 @@ el <- el %>%
          basisOfRecord = gsub("_", " ", str_to_title(basisOfRecord)),
          basisOfRecord = ifelse(basisOfRecord == "Living specimen", "Human observation", basisOfRecord)) # I assume these are ~the same
 
-write_rds(el, "el.RDS")
+write_rds(el, "data/el.RDS")
 
 #------------------------------------------------------------------------------
 # Data 2:
@@ -58,11 +55,15 @@ st_layers("china") # 4 layers
 ch_provinces <- st_read("china", layer = "chn_admbnda_adm1_ocha_2020")
 ch_divisions <- st_read("china", layer = "chn_admbnda_adm2_ocha_2020")
 
+# Yunnan and its centroid (for leaflet setView)
 yunnan <- ch_provinces %>% 
   filter(ADM1_EN == "Yunnan Province") %>% 
   dplyr::select(ADM1_EN, geometry)
 
-write_rds(yunnan, "yunnan.RDS")
+yunnan_pol <- st_cast(yunnan, "POLYGON")
+yunnan_centroid <- st_centroid(yunnan_pol)
+write_rds(yunnan, "data/yunnan.RDS")
+write_rds(yunnan_centroid, "data/yunnan_centroid.RDS")
 
 # Kunming, the capital of the Yunnan province, is the most Northern
 # point where the famous elephant herd has wandered so far in 2020-2021
@@ -70,14 +71,14 @@ kunming <- ch_divisions %>%
   filter(ADM2_EN == "Kunming") %>% 
   dplyr::select(ADM2_EN, Adm2_CAP, geometry)
 
-write_rds(kunming, "kunming.RDS")
+write_rds(kunming, "data/kunming.RDS")
 
 el_div <- merge(el_gd_data, ch_divisions, by.x = "Division", by.y = "ADM2_EN")
 el_div <- el_div %>% 
   dplyr::select(Division, Min, Max, geometry)
 el_div <- st_as_sf(el_div)
 
-write_rds(el_div, "el_div.RDS")
+write_rds(el_div, "data/el_div.RDS")
 
 #-------------------------------------------------------------------------------
 # Data 3:
@@ -95,15 +96,15 @@ my_el <- flickr_geocoded %>%
 rm(flickr_geocoded)
 gc()
 
-write_rds(my_el, "my_el.RDS")
+write_rds(my_el, "data/my_el.RDS")
 
-#---------------
-# Read in again
-#---------------
-el <- readRDS("el.RDS")
-yunnan <- readRDS("yunnan.RDS")
-kunming <- readRDS("kunming.RDS")
-el_div <- readRDS("el_div.RDS")
-my_el <- readRDS("my_el.RDS")
+#-----------------------------
+el <- readRDS("data/el.RDS")
+yunnan <- readRDS("data/yunnan.RDS")
+yunnan_centroid <- readRDS("data/yunnan_centroid.RDS")
+kunming <- readRDS("data/kunming.RDS")
+el_div <- readRDS("data/el_div.RDS")
+my_el <- readRDS("data/my_el.RDS")
+
 
 
