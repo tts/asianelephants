@@ -56,7 +56,7 @@ ui <- fluidPage(
          Lastly, there is one personal data marker from the mud flat of <a href='https://www.tabinwildlife.com.my/'>Tabin Wildlife Resort</a>, Sabah, Malaysian Borneo.</p>
          <p>Yunnan polygons are courtesy of <a href='https://ttdata.humdata.org'>Humanitarian Data Exchange</a>.</p>
          <p></p>
-         <p>The heatmap shows the distribution of GBIF observations, and the other map presents them as circle markers with a popup.</p>
+         <p>The heatmap shows the distribution of GBIF observations, whereas the other map presents them as circle markers with a popup.</p>
          <p></p>
          <p>Tuija Sonkkila <a href='https://twitter.com/ttso?lang=en'>@ttso</a> 2021-06-16</p>
          <p><a href='https://github.com/tts/asianelephants'>R code</a></p>
