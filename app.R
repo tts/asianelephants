@@ -51,14 +51,16 @@ ui <- fluidPage(
          <p></p>
          <p>Most of the ~300 elephants in China - 0,6% of the estimated total wild population - live in the <a href='https://en.wikipedia.org/wiki/Xishuangbanna_Dai_Autonomous_Prefecture'>Xishuangbanna Dai Autonomous Prefecture</a>, the southernmost region of the <a href='https://en.wikipedia.org/wiki/Yunnan'>Yunnan province</a>.</p>
          <p></p>
-         <p>Data presented in these maps consist mainly of observations recorded in <a href='https://gbif.org'>GBIF</a>, the Global Biodiversity Information Facility.
+         <p>Data presented in these maps consist mainly of iNaturalist observations via <a href='https://gbif.org'>GBIF</a>, the Global Biodiversity Information Facility.
          In addition, estimates of the number of elephants in Yunnan are from <a href='https://www.asesg.org/PDFfiles/2012/35-43-Zhang.pdf'>Li Zhang: Current Status of Asian Elephants in China</a> (PDF), <i>Gajah</i> 35 (2011) 43-46.
          Lastly, there is one personal data marker from the mud flat of <a href='https://www.tabinwildlife.com.my/'>Tabin Wildlife Resort</a>, Sabah, Malaysian Borneo.</p>
          <p>Yunnan polygons are courtesy of <a href='https://ttdata.humdata.org'>Humanitarian Data Exchange</a>.</p>
          <p></p>
          <p>The heatmap shows the distribution of GBIF observations, whereas the other map presents them as circle markers with a popup.</p>
          <p></p>
-         <p>Tuija Sonkkila <a href='https://twitter.com/ttso?lang=en'>@ttso</a> 2021-06-16</p>
+         <p>Observations by iNaturalist. Available from https://www.inaturalist.org. Accessed 2021-06-16.</p>
+         <p></p>
+         <p>Tuija Sonkkila <a href='https://twitter.com/ttso?lang=en'>@ttso</a></p>
          <p><a href='https://github.com/tts/asianelephants'>R code</a></p>
          </span></div>"),
     width = 3
