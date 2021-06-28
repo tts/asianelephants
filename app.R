@@ -10,7 +10,6 @@ yunnan <- readRDS("./data/yunnan.RDS")
 yunnan_centroid <- readRDS("data/yunnan_centroid.RDS")
 kunming <- readRDS("./data/kunming.RDS")
 el_div <- readRDS("./data/el_div.RDS")
-my_el <- readRDS("./data/my_el.RDS")
 
 labelstyle <- list(
   "color" = "black",
@@ -210,13 +209,6 @@ server <- function(input, output, session) {
             iconUrl = "http://leafletjs.com/examples/custom-icons/leaf-green.png",
             iconWidth = 1, iconHeight = 1
           )
-        ) %>%
-        addMarkers(
-          data = my_el,
-          lat = ~latitude,
-          lng = ~longitude,
-          label = "My observation of a wild Elephas maximus borneensis",
-          popup = ~paste0(popup_img, "<br/><b>Taken at: </b>", datetaken)
         ) %>%
         addSearchFeatures(
           targetGroups = "elobs", 
