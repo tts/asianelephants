@@ -58,7 +58,7 @@ ui <- fluidPage(
          <p></p>
          <p>The heatmap shows the distribution of GBIF observations, whereas the other map presents them as circle markers with a popup.</p>
          <p></p>
-         <p>Observations by iNaturalist. Available from https://www.inaturalist.org. Accessed 2021-06-16.</p>
+         <p>GBIF derived dataset DOI https://doi.org/10.15468/dd.vwcmpu</p>
          <p></p>
          <p>Tuija Sonkkila <a href='https://twitter.com/ttso?lang=en'>@ttso</a></p>
          <p><a href='https://github.com/tts/asianelephants'>R code</a></p>
