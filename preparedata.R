@@ -32,7 +32,7 @@ dataset_stats <- el %>%
   group_by(datasetKey) %>% 
   summarize(count = n())
 
-write_csv(dataset_stats, "dataset_count.csv")
+write.table(dataset_stats, "dataset_count.csv", sep=",",  col.names=FALSE, row.names = FALSE)
 
 el <- el %>% 
   select(-datasetKey)
