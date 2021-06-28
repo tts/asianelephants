@@ -32,7 +32,7 @@ dataset_stats <- el %>%
   group_by(datasetKey) %>% 
   summarize(count = n())
 
-write.table(dataset_stats, "dataset_count.csv", sep=",",  col.names=FALSE, row.names = FALSE)
+write.table(dataset_stats, "dataset_count.csv", sep = ",",  col.names = FALSE, row.names = FALSE)
 
 el <- el %>% 
   select(-datasetKey)
@@ -91,23 +91,6 @@ el_div <- st_as_sf(el_div)
 
 write_rds(el_div, "data/el_div.RDS")
 
-#-------------------------------------------------------------------------------
-# Data 3:
-# My own observation. Still waiting for a Research Grade status at iNaturalist 
-# so not available from GBIF yet
-#-------------------------------------------------------------------------------
-
-flickr_geocoded <- readRDS("../flickr/flickr_geocoded.RDS")
-my_el <- flickr_geocoded %>% 
-  filter(title == "Hammock session") %>% 
-  mutate(popup_img = "<a href='https://flic.kr/p/MND8dD'>Video frame by JH</a>",
-         datetaken = as.Date(datetaken)) %>% 
-  dplyr::select(latitude, longitude, datetaken, popup_img)
-
-rm(flickr_geocoded)
-gc()
-
-write_rds(my_el, "data/my_el.RDS")
 
 #-----------------------------
 el <- readRDS("data/el.RDS")
@@ -115,7 +98,6 @@ yunnan <- readRDS("data/yunnan.RDS")
 yunnan_centroid <- readRDS("data/yunnan_centroid.RDS")
 kunming <- readRDS("data/kunming.RDS")
 el_div <- readRDS("data/el_div.RDS")
-my_el <- readRDS("data/my_el.RDS")
 
 
 
