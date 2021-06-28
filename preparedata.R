@@ -12,8 +12,9 @@ library(rgdal)
 
 species <- occ_search(scientificName = "Elephas maximus", limit = 5000)
 species_1 <- as.data.frame(species$data)
+
 el <- species_1[,c("acceptedScientificName","stateProvince", "year", "recordedBy", 
-                   "basisOfRecord", "references", "decimalLatitude","decimalLongitude")]
+                   "basisOfRecord", "references", "decimalLatitude","decimalLongitude", "datasetKey")]
 
 el <- el %>% 
   filter(decimalLongitude > 60, acceptedScientificName != "BOLD:AAF0248") %>% # few bad data points
@@ -25,6 +26,16 @@ el <- el %>%
                                     references)),
          basisOfRecord = gsub("_", " ", str_to_title(basisOfRecord)),
          basisOfRecord = ifelse(basisOfRecord == "Living specimen", "Human observation", basisOfRecord)) # I assume these are ~the same
+
+# Dataset counts for the GBIF derived dataset
+dataset_stats <- el %>% 
+  group_by(datasetKey) %>% 
+  summarize(count = n())
+
+write_csv(dataset_stats, "dataset_count.csv")
+
+el <- el %>% 
+  select(-datasetKey)
 
 write_rds(el, "data/el.RDS")
 
